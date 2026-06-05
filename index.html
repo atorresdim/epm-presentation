@@ -1,0 +1,1351 @@
+<!DOCTYPE html>
+<html lang="es" class="h-full">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Presentación Oracle EPM - Dimensoft</title>
+    
+    <!-- Google Fonts: Nunito -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:ital,wght=0,300;0,400;0,600;0,700;0,800;0,900;1,400&display=swap" rel="stylesheet">
+    
+    <!-- FontAwesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        dimensoft: {
+                            textDark: '#44546A',
+                            accent1: '#6CB44A', // Verde brillante principal
+                            accent2: '#2297BD', // Azul teal
+                            accent3: '#057A91', // Azul profundo
+                            accent4: '#21313F', // Fondo pizarra oscuro
+                            accent5: '#5B9BD5', // Azul suave
+                            accent6: '#A5A5A5', // Gris medio
+                            accent7: '#518737', // Verde oscuro
+                            hyperlink: '#21313F',
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Nunito', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body {
+            font-family: 'Nunito', sans-serif;
+            background-color: #1a2632;
+            overflow: hidden;
+        }
+
+        /* 
+           Lienzo a escala inteligente de 1280x720 para garantizar 
+           que las fuentes se vean grandes y perfectamente nítidas en pantalla completa.
+        */
+        #slideViewport {
+            width: 1280px;
+            height: 720px;
+            transform-origin: center center;
+            flex-shrink: 0;
+            backface-visibility: hidden;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* Transiciones de Diapositiva */
+        .slide-transition {
+            transition: opacity 0.5s cubic-bezier(0.4, 0, 0.2, 1), transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .slide-hidden {
+            opacity: 0;
+            pointer-events: none;
+            transform: scale(0.97) translateY(10px);
+        }
+
+        .slide-active {
+            opacity: 1;
+            pointer-events: auto;
+            transform: scale(1) translateY(0);
+        }
+
+        /* Panel traslúcido tipo vidrio */
+        .glass-panel {
+            background: rgba(33, 49, 63, 0.85);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px rgba(255, 255, 255, 0.1) solid;
+        }
+
+        /* Efecto Puntero Láser */
+        .laser-pointer-dot {
+            width: 16px;
+            height: 16px;
+            background-color: #ff3b30;
+            box-shadow: 0 0 16px 8px rgba(255, 59, 48, 0.8);
+            border-radius: 50%;
+            position: absolute;
+            pointer-events: none;
+            z-index: 9999;
+            display: none;
+        }
+
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.15);
+        }
+        ::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.25);
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body class="text-white h-full flex flex-col justify-between select-none relative">
+
+    <!-- Láser Virtual -->
+    <div id="laserPointer" class="laser-pointer-dot"></div>
+
+    <!-- Cabecera de la Presentación -->
+    <header class="w-full bg-[#21313F] border-b border-white/10 px-6 py-3 flex items-center justify-between z-50">
+        <div class="flex items-center space-x-4">
+            <!-- Espacio reservado para el isotipo de la marca -->
+            <div id="headerIsotipoContainer" class="flex items-center space-x-2">
+                <!-- Por defecto se carga el isotipo Dimensoft -->
+                <div class="w-8 h-8 rounded bg-dimensoft-accent1 flex items-center justify-center font-black text-white text-base shadow-lg">D</div>
+            </div>
+            
+            <span class="text-xs uppercase bg-[#44546A] text-white px-2.5 py-1 rounded-md font-extrabold shadow-inner hidden md:inline-block">
+                Oracle Partner
+            </span>
+        </div>
+        
+        <!-- Centro de Control (Vista de Usuario Final, sin botón de carga) -->
+        <div class="flex items-center space-x-3">
+            <!-- Láser -->
+            <button id="toggleLaserBtn" title="Activar Puntero Láser (L)" class="p-2 text-white/75 hover:text-white transition duration-200 rounded-md hover:bg-white/10 flex items-center space-x-1">
+                <i class="fa-solid fa-circle text-[10px] text-red-500 mr-1 animate-pulse"></i>
+                <span class="text-xs hidden md:inline">Láser [L]</span>
+            </button>
+
+            <!-- Auto-reproducción -->
+            <button id="autoplayBtn" title="Reproducción Automática" class="p-2 text-white/75 hover:text-white transition duration-200 rounded-md hover:bg-white/10 flex items-center space-x-1">
+                <i class="fa-solid fa-play text-xs mr-1"></i>
+                <span id="autoplayLabel" class="text-xs hidden md:inline">Auto</span>
+            </button>
+
+            <!-- Audio/SFX -->
+            <button id="audioToggleBtn" title="Silenciar/Activar Efectos (M)" class="p-2 text-white/75 hover:text-white transition duration-200 rounded-md hover:bg-white/10 flex items-center">
+                <i id="audioIcon" class="fa-solid fa-volume-high text-xs"></i>
+            </button>
+
+            <!-- Indicador Numérico de Slide -->
+            <div class="text-sm bg-black/20 px-3 py-1.5 rounded-full border border-white/10 flex items-center font-extrabold">
+                Slide <span id="currentSlideNum" class="text-dimensoft-accent1 mx-1.5">1</span>/ 10
+            </div>
+        </div>
+    </header>
+
+    <!-- Visor de Diapositivas Adaptativo -->
+    <main class="flex-grow flex items-center justify-center p-4 bg-[#1a2632] relative overflow-hidden">
+        <!-- Luces y efectos ambientales traseros -->
+        <div class="absolute inset-0 pointer-events-none opacity-20">
+            <div class="absolute w-[800px] h-[800px] rounded-full bg-dimensoft-accent3/40 blur-[140px] top-[-10%] left-[-10%]"></div>
+            <div class="absolute w-[700px] h-[700px] rounded-full bg-dimensoft-accent1/30 blur-[140px] bottom-[-10%] right-[-10%]"></div>
+        </div>
+
+        <!-- Canvas de 1280x720 pixeles escalado por GPU -->
+        <div id="slideViewport" class="shadow-2xl rounded-2xl relative overflow-hidden border border-white/10 bg-[#21313F]">
+            
+            <!-- SLIDE 1: PORTADA -->
+            <div id="slide-1" class="absolute inset-0 slide-transition slide-active flex flex-col justify-between p-16 bg-gradient-to-br from-dimensoft-accent4 via-[#25394A] to-dimensoft-textDark">
+                <div class="flex justify-between items-center">
+                    <div></div>
+                    <span class="text-base uppercase tracking-widest text-dimensoft-accent1 font-black bg-dimensoft-accent1/15 px-4 py-1.5 rounded shadow">Planificación Estratégica</span>
+                </div>
+
+                <!-- Contenedor del Logotipo Monumental -->
+                <div class="flex flex-col items-center justify-center space-y-12 my-auto">
+                    <div id="slide1LogoContainer" class="flex items-center justify-center scale-110 transition duration-300">
+                        <!-- El logotipo definitivo de portada se cargará aquí -->
+                        <div class="flex items-center space-x-5">
+                            <div class="w-20 h-20 rounded-2xl bg-dimensoft-accent1 flex items-center justify-center font-black text-white text-5xl shadow-2xl">D</div>
+                            <span class="text-5xl font-black tracking-widest text-white">DIMENSOFT</span>
+                        </div>
+                    </div>
+
+                    <div class="text-center space-y-6 max-w-5xl">
+                        <h1 class="text-6xl lg:text-7xl font-black tracking-tight leading-none text-white uppercase">
+                            AGILIDAD TOTAL CON <span class="text-dimensoft-accent1">EPM</span>
+                        </h1>
+                        <h2 class="text-3xl text-dimensoft-accent5 font-extrabold tracking-wide">
+                            Finanzas preparadas para el futuro
+                        </h2>
+                        <p class="text-xl text-[#D1D5DB] max-w-3xl mx-auto leading-relaxed">
+                            Descubra cómo Oracle EPM transforma la planificación financiera en una ventaja competitiva real.
+                        </p>
+                    </div>
+                </div>
+
+                <div class="flex items-center justify-between border-t border-white/15 pt-8 text-base text-[#D1D5DB]">
+                    <div class="flex space-x-4 font-semibold">
+                        <span><strong class="text-white text-lg">Atilio Torres</strong> <span class="text-white/40">|</span> Consultor Senior EPM</span>
+                        <span><span class="text-white/40">|</span> <a href="https://www.dimensoft.pe" target="_blank" class="hover:text-dimensoft-accent1 transition">www.dimensoft.pe</a></span>
+                    </div>
+                    <div class="text-dimensoft-accent5 font-black text-lg tracking-wide uppercase">
+                        Enterprise Performance Management
+                    </div>
+                </div>
+            </div>
+
+            <!-- SLIDE 2: ¿QUÉ ES ORACLE EPM? -->
+            <div id="slide-2" class="absolute inset-0 slide-transition slide-hidden flex flex-col justify-between p-16 bg-gradient-to-br from-dimensoft-accent4 to-[#18232e]">
+                <div class="flex justify-between items-start">
+                    <div>
+                        <span class="text-xs uppercase tracking-widest text-dimensoft-accent2 font-black bg-dimensoft-accent2/15 px-2.5 py-1 rounded">Introducción</span>
+                        <h2 class="text-4xl font-black text-white mt-2">¿Qué es Oracle EPM?</h2>
+                        <p class="text-dimensoft-accent5 text-lg font-bold mt-1">Enterprise Performance Management — Vincula la estrategia con la ejecución.</p>
+                    </div>
+                    <div class="slide-isotipo-target opacity-80">
+                        <div class="w-8 h-8 rounded bg-dimensoft-accent1 flex items-center justify-center font-bold text-white text-base">D</div>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-12 gap-8 items-center my-auto">
+                    <div class="col-span-5 space-y-6">
+                        <div class="p-6 rounded-2xl bg-white/5 border border-white/10 shadow-xl">
+                            <p class="text-white/90 text-lg leading-relaxed">
+                                EPM es la plataforma que permite a las organizaciones <strong class="text-dimensoft-accent1">planificar, consolidar, reportar y analizar</strong> el rendimiento del negocio de forma integrada, ágil y colaborativa.
+                            </p>
+                        </div>
+                        <ul class="space-y-3 text-base">
+                            <li class="flex items-center space-x-3 text-white/90">
+                                <span class="w-3 h-3 rounded-full bg-dimensoft-accent1 shrink-0"></span>
+                                <span>Planificación integrada entre finanzas y líneas de negocio</span>
+                            </li>
+                            <li class="flex items-center space-x-3 text-white/90">
+                                <span class="w-3 h-3 rounded-full bg-dimensoft-accent2 shrink-0"></span>
+                                <span>Consolidación financiera ágil con múltiples escenarios</span>
+                            </li>
+                            <li class="flex items-center space-x-3 text-white/90">
+                                <span class="w-3 h-3 rounded-full bg-dimensoft-accent5 shrink-0"></span>
+                                <span>Informes narrativos colaborativos para toma de decisiones</span>
+                            </li>
+                        </ul>
+                    </div>
+
+                    <!-- Mapa de Arquitectura -->
+                    <div class="col-span-7 grid grid-cols-4 gap-4 relative py-6">
+                        <div class="absolute inset-x-0 top-1/2 -translate-y-1/2 h-1.5 bg-gradient-to-r from-dimensoft-accent6/20 via-dimensoft-accent2/35 to-dimensoft-accent1/50 -z-10"></div>
+                        
+                        <!-- Caja ERP -->
+                        <div class="bg-dimensoft-accent4 border border-dimensoft-accent6/30 rounded-2xl p-5 text-center transition hover:border-white/30 hover:scale-105 duration-300 shadow-lg">
+                            <span class="text-xs bg-dimensoft-accent6 text-[#21313F] font-black px-3 py-1 rounded-md">ERP</span>
+                            <div class="text-sm text-white/90 font-bold mt-4">Registra datos</div>
+                            <div class="text-dimensoft-accent6 text-xs uppercase font-extrabold mt-2">¿Qué pasó?</div>
+                        </div>
+
+                        <!-- Caja BI -->
+                        <div class="bg-dimensoft-accent4 border border-dimensoft-accent5/30 rounded-2xl p-5 text-center transition hover:border-white/30 hover:scale-105 duration-300 shadow-lg">
+                            <span class="text-xs bg-dimensoft-accent5 text-white font-black px-3 py-1 rounded-md">BI</span>
+                            <div class="text-sm text-white/90 font-bold mt-4">Info valiosa</div>
+                            <div class="text-dimensoft-accent5 text-xs uppercase font-extrabold mt-2">¿Por qué pasó?</div>
+                        </div>
+
+                        <!-- Caja Analytics -->
+                        <div class="bg-dimensoft-accent4 border border-dimensoft-accent2/30 rounded-2xl p-5 text-center transition hover:border-white/30 hover:scale-105 duration-300 shadow-lg">
+                            <span class="text-xs bg-dimensoft-accent2 text-white font-black px-3 py-1 rounded-md">Analytics</span>
+                            <div class="text-sm text-white/90 font-bold mt-4">Profundiza</div>
+                            <div class="text-dimensoft-accent2 text-xs uppercase font-extrabold mt-2">¿Por qué pasó?</div>
+                        </div>
+
+                        <!-- Caja EPM -->
+                        <div class="bg-[#1b2b3a] border border-dimensoft-accent1/50 rounded-2xl p-5 text-center shadow-2xl transition hover:scale-105 duration-300 ring-4 ring-dimensoft-accent1/30">
+                            <span class="text-xs bg-dimensoft-accent1 text-white font-black px-3 py-1 rounded-md shadow-sm">EPM</span>
+                            <div class="text-sm text-white font-black mt-4">Estrategia</div>
+                            <div class="text-dimensoft-accent1 text-xs uppercase font-extrabold mt-2">¿Qué pasaría si?</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flex justify-between items-center border-t border-white/5 pt-4 text-xs text-white/55">
+                    <span>Dimensoft - Oracle Partner</span>
+                    <span>www.dimensoft.pe</span>
+                </div>
+            </div>
+
+            <!-- SLIDE 3: LOS 4 PILARES DE ORACLE EPM -->
+            <div id="slide-3" class="absolute inset-0 slide-transition slide-hidden flex flex-col justify-between p-16 bg-[#21313F]">
+                <div class="flex justify-between items-start">
+                    <div>
+                        <span class="text-xs uppercase tracking-widest text-dimensoft-accent1 font-black bg-dimensoft-accent1/10 px-2.5 py-1 rounded">Pilares Fundamentales</span>
+                        <h2 class="text-4xl font-black text-white mt-2">Los 4 Pilares de Oracle EPM</h2>
+                        <p class="text-dimensoft-accent5 text-lg font-bold mt-1">Una plataforma integrada que cubre todo el ciclo del rendimiento empresarial</p>
+                    </div>
+                    <div class="slide-isotipo-target opacity-80">
+                        <div class="w-8 h-8 rounded bg-dimensoft-accent1 flex items-center justify-center font-bold text-white text-base">D</div>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-4 gap-6 my-auto">
+                    <!-- Pilar 1 -->
+                    <div class="bg-white/5 border border-white/10 p-6 rounded-2xl transition hover:bg-white/[0.08] hover:-translate-y-1.5 duration-300 flex flex-col justify-between h-[340px]">
+                        <div>
+                            <div class="flex justify-between items-start mb-6">
+                                <span class="text-sm font-black text-dimensoft-accent1 bg-dimensoft-accent1/10 px-3 py-1.5 rounded-lg">01</span>
+                                <div class="w-10 h-10 rounded-full bg-dimensoft-accent1/10 flex items-center justify-center">
+                                    <i class="fa-solid fa-chart-line text-xl text-dimensoft-accent1"></i>
+                                </div>
+                            </div>
+                            <h3 class="text-xl font-black text-white mb-2">Planning</h3>
+                            <h4 class="text-xs text-dimensoft-accent1 font-black uppercase tracking-wider mb-3">Planificación Inteligente</h4>
+                            <p class="text-sm text-[#A5A5A5] leading-relaxed">
+                                Presupuestos, forecasts y planes operativos integrados con predicción automática, modelado de escenarios y drivers de negocio.
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- Pilar 2 -->
+                    <div class="bg-white/5 border border-white/10 p-6 rounded-2xl transition hover:bg-white/[0.08] hover:-translate-y-1.5 duration-300 flex flex-col justify-between h-[340px]">
+                        <div>
+                            <div class="flex justify-between items-start mb-6">
+                                <span class="text-sm font-black text-dimensoft-accent2 bg-dimensoft-accent2/10 px-3 py-1.5 rounded-lg">02</span>
+                                <div class="w-10 h-10 rounded-full bg-dimensoft-accent2/10 flex items-center justify-center">
+                                    <i class="fa-solid fa-lock text-xl text-dimensoft-accent2"></i>
+                                </div>
+                            </div>
+                            <h3 class="text-xl font-black text-white mb-2">Financial Close</h3>
+                            <h4 class="text-xs text-dimensoft-accent2 font-black uppercase tracking-wider mb-3">Cierre y Consolidación</h4>
+                            <p class="text-sm text-[#A5A5A5] leading-relaxed">
+                                Agiliza y orquesta el proceso de cierre financiero y consolidación entre entidades, con flujos de trabajo automatizados.
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- Pilar 3 -->
+                    <div class="bg-white/5 border border-white/10 p-6 rounded-2xl transition hover:bg-white/[0.08] hover:-translate-y-1.5 duration-300 flex flex-col justify-between h-[340px]">
+                        <div>
+                            <div class="flex justify-between items-start mb-6">
+                                <span class="text-sm font-black text-dimensoft-accent5 bg-dimensoft-accent5/10 px-3 py-1.5 rounded-lg">03</span>
+                                <div class="w-10 h-10 rounded-full bg-dimensoft-accent5/10 flex items-center justify-center">
+                                    <i class="fa-solid fa-file-invoice text-xl text-dimensoft-accent5"></i>
+                                </div>
+                            </div>
+                            <h3 class="text-xl font-black text-white mb-2">Narrative Reporting</h3>
+                            <h4 class="text-xs text-dimensoft-accent5 font-black uppercase tracking-wider mb-3">Reportes Narrativos</h4>
+                            <p class="text-sm text-[#A5A5A5] leading-relaxed">
+                                Crea informes internos y externos de alta calidad en entornos colaborativos, combinando datos y narrativa en un solo lugar.
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- Pilar 4 -->
+                    <div class="bg-white/5 border border-white/10 p-6 rounded-2xl transition hover:bg-white/[0.08] hover:-translate-y-1.5 duration-300 flex flex-col justify-between h-[340px]">
+                        <div>
+                            <div class="flex justify-between items-start mb-6">
+                                <span class="text-sm font-black text-[#A5A5A5] bg-white/10 px-3 py-1.5 rounded-lg">04</span>
+                                <div class="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center">
+                                    <i class="fa-solid fa-database text-xl text-[#A5A5A5]"></i>
+                                </div>
+                            </div>
+                            <h3 class="text-xl font-black text-white mb-2">Gobierno de Datos</h3>
+                            <h4 class="text-xs text-[#A5A5A5] font-black uppercase tracking-wider mb-3">Gestión de Datos Maestros</h4>
+                            <p class="text-sm text-[#A5A5A5] leading-relaxed">
+                                Gobierno centralizado de la data empresarial, sincronización de metadatos entre EPM y ERP para transformaciones ágiles.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flex justify-between text-xs text-white/40 pt-4 border-t border-white/5">
+                    <span>www.dimensoft.pe</span>
+                    <span>© Dimensoft S.A.C.</span>
+                </div>
+            </div>
+
+            <!-- SLIDE 4: EPM PLANNING - EL CORAZÓN -->
+            <div id="slide-4" class="absolute inset-0 slide-transition slide-hidden flex flex-col justify-between p-16 bg-gradient-to-br from-[#1E2C39] to-dimensoft-accent4">
+                <div class="flex justify-between items-start">
+                    <div>
+                        <span class="text-xs uppercase tracking-widest text-dimensoft-accent1 font-black bg-dimensoft-accent1/10 px-2.5 py-1 rounded">EPM Planning</span>
+                        <h2 class="text-4xl font-black text-white mt-2">El corazón de la planificación empresarial</h2>
+                        <p class="text-dimensoft-accent5 text-lg font-bold mt-1">Planifique todo y fácil — desde finanzas hasta operaciones.</p>
+                    </div>
+                    <div class="slide-isotipo-target opacity-80">
+                        <div class="w-8 h-8 rounded bg-dimensoft-accent1 flex items-center justify-center font-bold text-white text-base">D</div>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-3 gap-6 my-auto">
+                    <!-- Feature 1 -->
+                    <div class="bg-[#293B4D] border-l-4 border-dimensoft-accent1 p-5 rounded-r-2xl shadow-xl hover:translate-x-1 transition duration-200">
+                        <h4 class="text-base font-black text-white flex items-center">
+                            <i class="fa-solid fa-gears text-dimensoft-accent1 mr-3 text-sm"></i> Modelado por Drivers
+                        </h4>
+                        <p class="text-sm text-white/85 mt-3 leading-relaxed">Proyecciones basadas en variables operativas reales: precio, volumen, eficiencia.</p>
+                    </div>
+
+                    <!-- Feature 2 -->
+                    <div class="bg-[#293B4D] border-l-4 border-dimensoft-accent1 p-5 rounded-r-2xl shadow-xl hover:translate-x-1 transition duration-200">
+                        <h4 class="text-base font-black text-white flex items-center">
+                            <i class="fa-solid fa-brain text-dimensoft-accent1 mr-3 text-sm"></i> Predicción Inteligente
+                        </h4>
+                        <p class="text-sm text-white/85 mt-3 leading-relaxed">Auto-predicción con ML incorporado para generar forecasts más precisos.</p>
+                    </div>
+
+                    <!-- Feature 3 -->
+                    <div class="bg-[#293B4D] border-l-4 border-dimensoft-accent1 p-5 rounded-r-2xl shadow-xl hover:translate-x-1 transition duration-200">
+                        <h4 class="text-base font-black text-white flex items-center">
+                            <i class="fa-solid fa-code-compare text-dimensoft-accent1 mr-3 text-sm"></i> Escenarios What-if
+                        </h4>
+                        <p class="text-sm text-white/85 mt-3 leading-relaxed">Simule múltiples versiones del plan en segundos sin copiar archivos.</p>
+                    </div>
+
+                    <!-- Feature 4 -->
+                    <div class="bg-[#293B4D] border-l-4 border-dimensoft-accent5 p-5 rounded-r-2xl shadow-xl hover:translate-x-1 transition duration-200">
+                        <h4 class="text-base font-black text-white flex items-center">
+                            <i class="fa-solid fa-arrow-right-arrow-left text-dimensoft-accent5 mr-3 text-sm"></i> Rolling Forecast
+                        </h4>
+                        <p class="text-sm text-white/85 mt-3 leading-relaxed">Planes continuos y adaptativos que reemplazan el presupuesto estático anual.</p>
+                    </div>
+
+                    <!-- Feature 5 -->
+                    <div class="bg-[#293B4D] border-l-4 border-dimensoft-accent5 p-5 rounded-r-2xl shadow-xl hover:translate-x-1 transition duration-200">
+                        <h4 class="text-base font-black text-white flex items-center">
+                            <i class="fa-solid fa-circle-nodes text-dimensoft-accent5 mr-3 text-sm"></i> Integración con ERP
+                        </h4>
+                        <p class="text-sm text-white/85 mt-3 leading-relaxed">Conecta con Oracle ERP, SAP, JDE y otros sistemas sin intermediarios.</p>
+                    </div>
+
+                    <!-- Feature 6 -->
+                    <div class="bg-[#293B4D] border-l-4 border-dimensoft-accent5 p-5 rounded-r-2xl shadow-xl hover:translate-x-1 transition duration-200">
+                        <h4 class="text-base font-black text-white flex items-center">
+                            <i class="fa-solid fa-cloud text-dimensoft-accent5 mr-3 text-sm"></i> Colaboración en la Nube
+                        </h4>
+                        <p class="text-sm text-white/85 mt-3 leading-relaxed">Flujos de aprobación, workflows y entrada de datos desde cualquier lugar.</p>
+                    </div>
+                </div>
+
+                <div class="flex justify-between items-center text-xs text-white/40 pt-4 border-t border-white/5">
+                    <span>EPM Cloud Suite</span>
+                    <span>www.dimensoft.pe</span>
+                </div>
+            </div>
+
+            <!-- SLIDE 5: MARCO DE TRABAJO — EPM PLANNING (Versión Enriquecida XP&A) -->
+            <div id="slide-5" class="absolute inset-0 slide-transition slide-hidden flex flex-col justify-between p-16 bg-[#21313F]">
+                <div class="flex justify-between items-start">
+                    <div>
+                        <span class="text-xs uppercase tracking-widest text-dimensoft-accent2 font-black bg-dimensoft-accent2/10 px-2.5 py-1 rounded">Marco de Trabajo Conectado</span>
+                        <h2 class="text-4xl font-black text-white mt-2">Marco de Trabajo  —  EPM Planning</h2>
+                        <p class="text-dimensoft-accent5 text-lg font-bold mt-1">Sincronice la estrategia financiera con los planes operativos de toda la organización</p>
+                    </div>
+                    <div class="slide-isotipo-target opacity-80">
+                        <div class="w-8 h-8 rounded bg-dimensoft-accent1 flex items-center justify-center font-bold text-white text-base">D</div>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-12 gap-6 my-auto items-stretch">
+                    <!-- Columna de Concepto Estratégico (XP&A) -->
+                    <div class="col-span-4 bg-gradient-to-b from-dimensoft-accent3/20 to-transparent border border-dimensoft-accent3/40 p-6 rounded-2xl flex flex-col justify-between shadow-lg">
+                        <div>
+                            <div class="flex items-center space-x-3 mb-4">
+                                <span class="w-2.5 h-2.5 rounded-full bg-dimensoft-accent1 animate-pulse"></span>
+                                <span class="text-xs font-black uppercase text-dimensoft-accent1 tracking-wider">Concepto XP&A</span>
+                            </div>
+                            <h3 class="text-xl font-black text-white leading-snug mb-3">Planificación Conectada</h3>
+                            <p class="text-sm text-[#E5E7EB] leading-relaxed">
+                                Tradicionalmente, cada área planifica en silos aislados. Con Oracle EPM, un cambio en la previsión de cualquier área (ej. ventas o personal) <strong class="text-dimensoft-accent1">recalcula el impacto en el flujo de caja corporativo</strong> al instante.
+                            </p>
+                        </div>
+                        <div class="mt-4 pt-4 border-t border-white/10 text-xs text-[#A5A5A5] flex items-center space-x-2">
+                            <i class="fa-solid fa-circle-nodes text-dimensoft-accent5 text-sm"></i>
+                            <span>Consistencia absoluta de datos</span>
+                        </div>
+                    </div>
+
+                    <!-- Cuadrícula Derecha de 8 Áreas con Casos de Uso Activos -->
+                    <div class="col-span-8 grid grid-cols-2 gap-3">
+                        
+                        <!-- Area 1: Finanzas -->
+                        <div class="bg-white/5 border border-white/10 hover:border-dimensoft-accent1/60 hover:bg-white/[0.08] transition-all duration-200 p-3 rounded-xl flex items-start space-x-3 shadow">
+                            <div class="w-10 h-10 rounded-lg bg-dimensoft-accent1/10 flex items-center justify-center shrink-0 mt-0.5">
+                                <i class="fa-solid fa-chart-line text-dimensoft-accent1 text-base"></i>
+                            </div>
+                            <div>
+                                <span class="text-sm font-black text-white block">Finanzas Core</span>
+                                <span class="text-[11px] text-[#A5A5A5] leading-snug block mt-0.5">Consolidación automática de P&G, balance general e impacto fiscal inmediato.</span>
+                            </div>
+                        </div>
+
+                        <!-- Area 2: Comercial -->
+                        <div class="bg-white/5 border border-white/10 hover:border-dimensoft-accent2/60 hover:bg-white/[0.08] transition-all duration-200 p-3 rounded-xl flex items-start space-x-3 shadow">
+                            <div class="w-10 h-10 rounded-lg bg-dimensoft-accent2/10 flex items-center justify-center shrink-0 mt-0.5">
+                                <i class="fa-solid fa-cart-shopping text-dimensoft-accent2 text-base"></i>
+                            </div>
+                            <div>
+                                <span class="text-sm font-black text-white block">Comercial & Ventas</span>
+                                <span class="text-[11px] text-[#A5A5A5] leading-snug block mt-0.5">Modelado de cuotas de ventas, comisiones y proyecciones de ingresos por territorios.</span>
+                            </div>
+                        </div>
+
+                        <!-- Area 3: Marketing -->
+                        <div class="bg-white/5 border border-white/10 hover:border-dimensoft-accent5/60 hover:bg-white/[0.08] transition-all duration-200 p-3 rounded-xl flex items-start space-x-3 shadow">
+                            <div class="w-10 h-10 rounded-lg bg-dimensoft-accent5/10 flex items-center justify-center shrink-0 mt-0.5">
+                                <i class="fa-solid fa-bullhorn text-dimensoft-accent5 text-base"></i>
+                            </div>
+                            <div>
+                                <span class="text-sm font-black text-white block">Marketing</span>
+                                <span class="text-[11px] text-[#A5A5A5] leading-snug block mt-0.5">Medición del ROI de campañas y asignación dinámica de presupuestos de difusión.</span>
+                            </div>
+                        </div>
+
+                        <!-- Area 4: Operaciones -->
+                        <div class="bg-white/5 border border-white/10 hover:border-dimensoft-accent1/60 hover:bg-white/[0.08] transition-all duration-200 p-3 rounded-xl flex items-start space-x-3 shadow">
+                            <div class="w-10 h-10 rounded-lg bg-dimensoft-accent1/10 flex items-center justify-center shrink-0 mt-0.5">
+                                <i class="fa-solid fa-gears text-dimensoft-accent1 text-base"></i>
+                            </div>
+                            <div>
+                                <span class="text-sm font-black text-white block">Operaciones</span>
+                                <span class="text-[11px] text-[#A5A5A5] leading-snug block mt-0.5">Sincronización directa entre metas de manufactura/producción y costos unitarios.</span>
+                            </div>
+                        </div>
+
+                        <!-- Area 5: Supply Chain -->
+                        <div class="bg-white/5 border border-white/10 hover:border-dimensoft-accent2/60 hover:bg-white/[0.08] transition-all duration-200 p-3 rounded-xl flex items-start space-x-3 shadow">
+                            <div class="w-10 h-10 rounded-lg bg-dimensoft-accent2/10 flex items-center justify-center shrink-0 mt-0.5">
+                                <i class="fa-solid fa-truck text-dimensoft-accent2 text-base"></i>
+                            </div>
+                            <div>
+                                <span class="text-sm font-black text-white block">Supply Chain</span>
+                                <span class="text-[11px] text-[#A5A5A5] leading-snug block mt-0.5">Planificación inteligente de inventarios, compras y estimación de costos logísticos.</span>
+                            </div>
+                        </div>
+
+                        <!-- Area 6: IT -->
+                        <div class="bg-white/5 border border-white/10 hover:border-dimensoft-accent5/60 hover:bg-white/[0.08] transition-all duration-200 p-3 rounded-xl flex items-start space-x-3 shadow">
+                            <div class="w-10 h-10 rounded-lg bg-dimensoft-accent5/10 flex items-center justify-center shrink-0 mt-0.5">
+                                <i class="fa-solid fa-database text-dimensoft-accent5 text-base"></i>
+                            </div>
+                            <div>
+                                <span class="text-sm font-black text-white block">Tecnología (IT)</span>
+                                <span class="text-[11px] text-[#A5A5A5] leading-snug block mt-0.5">Gestión de portafolios tecnológicos, costos de infraestructura, licencias y OPEX.</span>
+                            </div>
+                        </div>
+
+                        <!-- Area 7: RR.HH. -->
+                        <div class="bg-white/5 border border-white/10 hover:border-dimensoft-accent1/60 hover:bg-white/[0.08] transition-all duration-200 p-3 rounded-xl flex items-start space-x-3 shadow">
+                            <div class="w-10 h-10 rounded-lg bg-dimensoft-accent1/10 flex items-center justify-center shrink-0 mt-0.5">
+                                <i class="fa-solid fa-users-gear text-dimensoft-accent1 text-base"></i>
+                            </div>
+                            <div>
+                                <span class="text-sm font-black text-white block">Recursos Humanos</span>
+                                <span class="text-[11px] text-[#A5A5A5] leading-snug block mt-0.5">Previsión exacta de nómina global, nuevos headcount y costos por beneficios sociales.</span>
+                            </div>
+                        </div>
+
+                        <!-- Area 8: CAPEX -->
+                        <div class="bg-white/5 border border-white/10 hover:border-dimensoft-accent2/60 hover:bg-white/[0.08] transition-all duration-200 p-3 rounded-xl flex items-start space-x-3 shadow">
+                            <div class="w-10 h-10 rounded-lg bg-dimensoft-accent2/10 flex items-center justify-center shrink-0 mt-0.5">
+                                <i class="fa-solid fa-building text-dimensoft-accent2 text-base"></i>
+                            </div>
+                            <div>
+                                <span class="text-sm font-black text-white block">CAPEX & Proyectos</span>
+                                <span class="text-[11px] text-[#A5A5A5] leading-snug block mt-0.5">Planificación de inversiones de capital en activos, retornos de ROI e impacto en depreciación.</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flex justify-between items-center text-xs text-white/40 pt-4 border-t border-white/5">
+                    <span class="font-bold text-dimensoft-accent1">EPM PLANNING FRAMEWORK (XP&A)</span>
+                    <span>www.dimensoft.pe</span>
+                </div>
+            </div>
+
+            <!-- SLIDE 6: CÓMO PROYECTA EPM PLANNING -->
+            <div id="slide-6" class="absolute inset-0 slide-transition slide-hidden flex flex-col justify-between p-16 bg-gradient-to-br from-dimensoft-accent4 to-[#1F2E3C]">
+                <div class="flex justify-between items-start">
+                    <div>
+                        <span class="text-xs uppercase tracking-widest text-dimensoft-accent1 font-black bg-dimensoft-accent1/10 px-2.5 py-1 rounded">Metodologías de Proyección</span>
+                        <h2 class="text-4xl font-black text-white mt-2">Cómo Proyecta EPM Planning</h2>
+                        <p class="text-dimensoft-accent5 text-lg font-bold mt-1">Cuatro métodos de proyección que pueden combinarse en un mismo modelo</p>
+                    </div>
+                    <div class="slide-isotipo-target opacity-80">
+                        <div class="w-8 h-8 rounded bg-dimensoft-accent1 flex items-center justify-center font-bold text-white text-base">D</div>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-4 gap-5 my-auto">
+                    <!-- Método 1 -->
+                    <div class="bg-white/5 border-t-4 border-dimensoft-accent1 p-5 rounded-xl flex flex-col justify-between hover:bg-white/[0.08] transition duration-300 min-h-[280px] shadow-lg">
+                        <div>
+                            <span class="text-sm font-black uppercase text-dimensoft-accent1 tracking-widest">01. Drivers</span>
+                            <p class="text-sm text-[#E5E7EB] leading-relaxed mt-3">
+                                Proyecta a partir de variables operativas (precio, volumen, días, ratios). El modelo calcula automáticamente cuando cambia un driver.
+                            </p>
+                        </div>
+                        <div class="mt-4 bg-dimensoft-accent1/15 border border-dimensoft-accent1/35 p-3 rounded-lg text-xs leading-relaxed text-[#F3F4F6]">
+                            <strong class="text-dimensoft-accent1 text-sm block mb-1">Ej:</strong> Costo de mano de obra = Nº empleados × Costo unitario × días trabajados.
+                        </div>
+                    </div>
+
+                    <!-- Método 2 -->
+                    <div class="bg-white/5 border-t-4 border-dimensoft-accent2 p-5 rounded-xl flex flex-col justify-between hover:bg-white/[0.08] transition duration-300 min-h-[280px] shadow-lg">
+                        <div>
+                            <span class="text-sm font-black uppercase text-dimensoft-accent2 tracking-widest">02. Tendencias</span>
+                            <p class="text-sm text-[#E5E7EB] leading-relaxed mt-3">
+                                Utiliza patrones históricos (promedio móvil, regresión lineal) para proyectar los períodos futuros de forma automática.
+                            </p>
+                        </div>
+                        <div class="mt-4 bg-dimensoft-accent2/15 border border-dimensoft-accent2/35 p-3 rounded-lg text-xs leading-relaxed text-[#F3F4F6]">
+                            <strong class="text-dimensoft-accent2 text-sm block mb-1">Ej:</strong> Ventas proyectadas basadas en los últimos 12 meses ajustadas por estacionalidad
+                        </div>
+                    </div>
+
+                    <!-- Método 3 -->
+                    <div class="bg-white/5 border-t-4 border-dimensoft-accent5 p-5 rounded-xl flex flex-col justify-between hover:bg-white/[0.08] transition duration-300 min-h-[280px] shadow-lg">
+                        <div>
+                            <span class="text-sm font-black uppercase text-dimensoft-accent5 tracking-widest">03. Entrada Directa</span>
+                            <p class="text-sm text-[#E5E7EB] leading-relaxed mt-3">
+                                Permite ingresar manualmente valores en celdas de formularios web o vía integración con Excel para máxima flexibilidad.
+                            </p>
+                        </div>
+                        <div class="mt-4 bg-dimensoft-accent5/15 border border-dimensoft-accent5/35 p-3 rounded-lg text-xs leading-relaxed text-[#F3F4F6]">
+                            <strong class="text-dimensoft-accent5 text-sm block mb-1">Ej:</strong> El área comercial ingresa directamente su meta de ventas por producto y región
+                        </div>
+                    </div>
+
+                    <!-- Método 4 -->
+                    <div class="bg-white/5 border-t-4 border-dimensoft-accent1 p-5 rounded-xl flex flex-col justify-between hover:bg-white/[0.08] transition duration-300 min-h-[280px] shadow-lg">
+                        <div>
+                            <span class="text-sm font-black uppercase text-dimensoft-accent1 tracking-widest">04. Auto-Predicción</span>
+                            <p class="text-sm text-[#E5E7EB] leading-relaxed mt-3">
+                                Machine Learning integrado que analiza patrones históricos y genera un forecast base automáticamente, listo para ajustar.
+                            </p>
+                        </div>
+                        <div class="mt-4 bg-dimensoft-accent1/15 border border-dimensoft-accent1/35 p-3 rounded-lg text-xs leading-relaxed text-[#F3F4F6]">
+                            <strong class="text-dimensoft-accent1 text-sm block mb-1">Ej:</strong> Sistema genera automáticamente el forecast de gastos para los próximos 6 meses
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flex justify-between items-center text-xs text-white/40 pt-4 border-t border-white/5">
+                    <span>Engine Predictivo de Alto Rendimiento</span>
+                    <span>www.dimensoft.pe</span>
+                </div>
+            </div>
+
+            <!-- SLIDE 7: MÓDULOS OUT OF THE BOX -->
+            <div id="slide-7" class="absolute inset-0 slide-transition slide-hidden flex flex-col justify-between p-16 bg-[#21313F]">
+                <div class="flex justify-between items-start">
+                    <div>
+                        <span class="text-xs uppercase tracking-widest text-dimensoft-accent2 font-black bg-dimensoft-accent2/10 px-2.5 py-1 rounded">Módulos Preconfigurados</span>
+                        <h2 class="text-4xl font-black text-white mt-2">Módulos Out of the Box</h2>
+                        <p class="text-dimensoft-accent5 text-lg font-bold mt-1">Predefinidos por Oracle — listos desde el día uno, configurables según cada industria</p>
+                    </div>
+                    <div class="slide-isotipo-target opacity-80">
+                        <div class="w-8 h-8 rounded bg-dimensoft-accent1 flex items-center justify-center font-bold text-white text-base">D</div>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-6 gap-4 my-auto">
+                    <!-- Financiero -->
+                    <div class="bg-gradient-to-b from-white/5 to-white/[0.02] border border-white/10 p-5 rounded-2xl flex flex-col justify-between h-[300px] shadow">
+                        <div>
+                            <div class="flex justify-between items-center mb-3">
+                                <i class="fa-solid fa-chart-column text-dimensoft-accent1 text-lg"></i>
+                                <span class="text-[10px] bg-dimensoft-accent1/15 text-dimensoft-accent1 font-black px-2 py-0.5 rounded uppercase">CORE</span>
+                            </div>
+                            <h4 class="text-base font-black text-white mb-3">Financiero</h4>
+                            <ul class="text-xs text-white/80 space-y-2 list-disc list-inside">
+                                <li>P&G / Estados Financieros</li>
+                                <li>Balance General</li>
+                                <li>Flujo de Caja</li>
+                                <li>Centro de costos</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <!-- Fuerza Laboral -->
+                    <div class="bg-gradient-to-b from-white/5 to-white/[0.02] border border-white/10 p-5 rounded-2xl flex flex-col justify-between h-[300px] shadow">
+                        <div>
+                            <div class="flex justify-between items-center mb-3">
+                                <i class="fa-solid fa-user text-dimensoft-accent1 text-lg"></i>
+                                <span class="text-[10px] bg-dimensoft-accent1/15 text-dimensoft-accent1 font-black px-2 py-0.5 rounded uppercase">CORE</span>
+                            </div>
+                            <h4 class="text-base font-black text-white mb-3">Fuerza Laboral</h4>
+                            <ul class="text-xs text-white/80 space-y-2 list-disc list-inside">
+                                <li>Planificación headcount</li>
+                                <li>Costo laboral detallado</li>
+                                <li>Compensaciones y beneficios</li>
+                                <li>Turnover y nuevas contrataciones</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <!-- CAPEX -->
+                    <div class="bg-gradient-to-b from-white/5 to-white/[0.02] border border-white/10 p-5 rounded-2xl flex flex-col justify-between h-[300px] shadow">
+                        <div>
+                            <div class="flex justify-between items-center mb-3">
+                                <i class="fa-solid fa-helmet-safety text-dimensoft-accent1 text-lg"></i>
+                                <span class="text-[10px] bg-dimensoft-accent1/15 text-dimensoft-accent1 font-black px-2 py-0.5 rounded uppercase">CORE</span>
+                            </div>
+                            <h4 class="text-base font-black text-white mb-3">CAPEX</h4>
+                            <ul class="text-xs text-white/80 space-y-2 list-disc list-inside">
+                                <li>Proyectos de inversión</li>
+                                <li>Depreciación automática</li>
+                                <li>Cash flows de inversión</li>
+                                <li>Análisis ROI</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <!-- Proyectos -->
+                    <div class="bg-gradient-to-b from-white/5 to-white/[0.02] border border-white/10 p-5 rounded-2xl flex flex-col justify-between h-[300px] shadow">
+                        <div>
+                            <div class="flex justify-between items-center mb-3">
+                                <i class="fa-solid fa-code-fork text-dimensoft-accent1 text-lg"></i>
+                                <span class="text-[10px] bg-dimensoft-accent1/15 text-dimensoft-accent1 font-black px-2 py-0.5 rounded uppercase">CORE</span>
+                            </div>
+                            <h4 class="text-base font-black text-white mb-3">Proyectos</h4>
+                            <ul class="text-xs text-white/80 space-y-2 list-disc list-inside">
+                                <li>Presupuesto por proyecto</li>
+                                <li>Recursos y horas</li>
+                                <li>Avance vs. plan</li>
+                                <li>Costo por fase</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <!-- Sales Planning -->
+                    <div class="bg-gradient-to-b from-dimensoft-accent2/10 to-transparent border border-dimensoft-accent2/25 p-5 rounded-2xl flex flex-col justify-between h-[300px] shadow-lg">
+                        <div>
+                            <div class="flex justify-between items-center mb-3">
+                                <i class="fa-solid fa-store text-dimensoft-accent2 text-lg"></i>
+                                <span class="text-[10px] bg-dimensoft-accent2/20 text-dimensoft-accent2 font-black px-2 py-0.5 rounded uppercase">ENT.</span>
+                            </div>
+                            <h4 class="text-base font-black text-white mb-3">Sales Plan</h4>
+                            <ul class="text-xs text-white/80 space-y-2 list-disc list-inside">
+                                <li>Planes de ventas por canal y región</li>
+                                <li>Cuotas y territorios</li>
+                                <li>Pipeline y revenue forecast</li>
+                                <li>Integración con CRM</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <!-- Cash Forecasting -->
+                    <div class="bg-gradient-to-b from-dimensoft-accent2/10 to-transparent border border-dimensoft-accent2/25 p-5 rounded-2xl flex flex-col justify-between h-[300px] shadow-lg">
+                        <div>
+                            <div class="flex justify-between items-center mb-3">
+                                <i class="fa-solid fa-chart-line text-dimensoft-accent2 text-lg"></i>
+                                <span class="text-[10px] bg-dimensoft-accent2/20 text-dimensoft-accent2 font-black px-2 py-0.5 rounded uppercase">ENT.</span>
+                            </div>
+                            <h4 class="text-base font-black text-white mb-3">Cash Forecasting</h4>
+                            <ul class="text-xs text-white/80 space-y-2 list-disc list-inside">
+                                <li>Proyección de Flujo de Caja</li>
+                                <li>Visibilidad de posición de efectivo</li>
+                                <li>Múltiples escenarios de liquidez</li>
+                                <li>Integración con ERP</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flex justify-between items-center text-xs text-white/40 pt-4 border-t border-white/5">
+                    <span>*Módulos CORE incluidos en licenciamiento estándar</span>
+                    <span>www.dimensoft.pe</span>
+                </div>
+            </div>
+
+            <!-- SLIDE 8: ¿A QUIÉN LE CONVIENE EPM PLANNING? -->
+            <div id="slide-8" class="absolute inset-0 slide-transition slide-hidden flex flex-col justify-between p-16 bg-gradient-to-br from-[#1b2b3a] to-dimensoft-accent4">
+                <div class="flex justify-between items-start">
+                    <div>
+                        <span class="text-xs uppercase tracking-widest text-dimensoft-accent1 font-black bg-dimensoft-accent1/10 px-2.5 py-1 rounded">Público Objetivo</span>
+                        <h2 class="text-4xl font-black text-white mt-2">¿A quién le conviene EPM Planning?</h2>
+                        <p class="text-dimensoft-accent5 text-lg font-bold mt-1">La herramienta correcta para quienes lideran la planificación financiera y operativa.</p>
+                    </div>
+                    <div class="slide-isotipo-target opacity-80">
+                        <div class="w-8 h-8 rounded bg-dimensoft-accent1 flex items-center justify-center font-bold text-white text-base">D</div>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-12 gap-8 my-auto items-center">
+                    <!-- Callout Excel -->
+                    <div class="col-span-5 bg-dimensoft-accent1/10 border border-dimensoft-accent1/30 p-7 rounded-2xl shadow-xl">
+                        <i class="fa-solid fa-file-excel text-dimensoft-accent1 text-4xl mb-4"></i>
+                        <h4 class="text-lg font-black text-white leading-relaxed mb-3">¿Usted gestiona presupuestos en Excel con múltiples versiones y archivos que nadie controla?</h4>
+                        <p class="text-sm text-dimensoft-accent1 font-black uppercase mt-4 tracking-wider flex items-center">
+                            <i class="fa-solid fa-circle-exclamation mr-2"></i> EPM Planning es para usted.
+                        </p>
+                    </div>
+
+                    <!-- Roles y Puestos Clave -->
+                    <div class="col-span-7 grid grid-cols-2 gap-4">
+                        <div class="p-4 bg-white/5 border border-white/10 rounded-xl hover:bg-white/[0.08] transition duration-200 shadow">
+                            <span class="text-sm font-black text-dimensoft-accent2 block mb-1">CFO / Director Financiero</span>
+                            <p class="text-xs text-[#E5E7EB] leading-relaxed">Visibilidad total del rendimiento financiero y capacidad de respuesta ante cambios del entorno.</p>
+                        </div>
+                        <div class="p-4 bg-white/5 border border-white/10 rounded-xl hover:bg-white/[0.08] transition duration-200 shadow">
+                            <span class="text-sm font-black text-dimensoft-accent5 block mb-1">FP&A / Control de Gestión</span>
+                            <p class="text-xs text-[#E5E7EB] leading-relaxed">Automatiza la consolidación, genera forecasts precisos y presenta escenarios en minutos.</p>
+                        </div>
+                        <div class="p-4 bg-white/5 border border-white/10 rounded-xl hover:bg-white/[0.08] transition duration-200 shadow">
+                            <span class="text-sm font-black text-dimensoft-accent1 block mb-1">Gerencia de Operaciones</span>
+                            <p class="text-xs text-[#E5E7EB] leading-relaxed">Integra planes operativos con el financiero: producción, mantenimiento, proyectos.</p>
+                        </div>
+                        <div class="p-4 bg-white/5 border border-white/10 rounded-xl hover:bg-white/[0.08] transition duration-200 shadow">
+                            <span class="text-sm font-black text-[#A5A5A5] block mb-1">Gerencia de RR.HH.</span>
+                            <p class="text-xs text-[#E5E7EB] leading-relaxed">Planifica headcount, costo laboral y compensaciones integrados al presupuesto.</p>
+                        </div>
+                        <div class="p-4 bg-white/5 border border-white/10 rounded-xl hover:bg-white/[0.08] transition duration-200 shadow col-span-2">
+                            <span class="text-sm font-black text-dimensoft-accent2 block mb-1">Directores de Línea de Negocio</span>
+                            <p class="text-xs text-[#E5E7EB] leading-relaxed">Tienen su propio dashboard e ingresan datos directamente sin depender de Finanzas.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="text-right text-xs text-white/40 border-t border-white/5 pt-4">
+                    www.dimensoft.pe
+                </div>
+            </div>
+
+            <!-- SLIDE 9: PRINCIPALES BENEFICIOS -->
+            <div id="slide-9" class="absolute inset-0 slide-transition slide-hidden flex flex-col justify-between p-16 bg-[#21313F]">
+                <div class="flex justify-between items-start">
+                    <div>
+                        <span class="text-xs uppercase tracking-widest text-dimensoft-accent1 font-black bg-dimensoft-accent1/10 px-2.5 py-1 rounded">Casos de Éxito y KPI</span>
+                        <h2 class="text-4xl font-black text-white mt-2">Principales Beneficios</h2>
+                        <p class="text-dimensoft-accent5 text-lg font-bold mt-1">Resultados comprobados en organizaciones que adoptaron EPM Planning</p>
+                    </div>
+                    <div class="slide-isotipo-target opacity-80">
+                        <div class="w-8 h-8 rounded bg-dimensoft-accent1 flex items-center justify-center font-bold text-white text-base">D</div>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-12 gap-8 my-auto items-center">
+                    <!-- Métricas -->
+                    <div class="col-span-6 grid grid-cols-3 gap-4">
+                        <div class="bg-white/5 border border-white/10 p-5 rounded-2xl text-center shadow-xl">
+                            <div class="text-5xl font-black text-dimensoft-accent1">50%</div>
+                            <div class="text-xs text-[#D1D5DB] font-semibold mt-3 leading-relaxed">Reducción en tiempo de cierre financiero</div>
+                        </div>
+                        <div class="bg-white/5 border border-white/10 p-5 rounded-2xl text-center shadow-xl">
+                            <div class="text-5xl font-black text-dimensoft-accent2">35%</div>
+                            <div class="text-xs text-[#D1D5DB] font-semibold mt-3 leading-relaxed">Menos días en forecast mensual</div>
+                        </div>
+                        <div class="bg-white/5 border border-white/10 p-5 rounded-2xl text-center shadow-xl">
+                            <div class="text-5xl font-black text-dimensoft-accent5">58%</div>
+                            <div class="text-xs text-[#D1D5DB] font-semibold mt-3 leading-relaxed">Menos tiempo para producir informes</div>
+                        </div>
+                    </div>
+
+                    <!-- Lista de Viñetas de Beneficios -->
+                    <div class="col-span-6 space-y-3.5 text-base font-semibold">
+                        <div class="flex items-center space-x-4 bg-white/5 border border-white/5 p-3 rounded-2xl shadow-sm">
+                            <span class="text-sm font-black text-white bg-dimensoft-accent1 w-7 h-7 rounded-full flex items-center justify-center shrink-0 shadow-sm">1</span>
+                            <span class="text-[#F3F4F6]">Única fuente de verdad.</span>
+                        </div>
+                        <div class="flex items-center space-x-4 bg-white/5 border border-white/5 p-3 rounded-2xl shadow-sm">
+                            <i class="fa-solid fa-circle-check text-dimensoft-accent2 text-2xl shrink-0"></i>
+                            <span class="text-[#F3F4F6]">Múltiples versiones del presupuesto fáciles de simular sin copiar archivos.</span>
+                        </div>
+                        <div class="flex items-center space-x-4 bg-white/5 border border-white/5 p-3 rounded-2xl shadow-sm">
+                            <i class="fa-solid fa-circle-check text-dimensoft-accent2 text-2xl shrink-0"></i>
+                            <span class="text-[#F3F4F6]">Adiós a la consolidación manual en Excel — datos siempre íntegros y auditables.</span>
+                        </div>
+                        <div class="flex items-center space-x-4 bg-white/5 border border-white/5 p-3 rounded-2xl shadow-sm">
+                            <i class="fa-solid fa-circle-check text-dimensoft-accent2 text-2xl shrink-0"></i>
+                            <span class="text-[#F3F4F6]">Colaboración entre finanzas y operaciones en una sola plataforma.</span>
+                        </div>
+                        <div class="flex items-center space-x-4 bg-white/5 border border-white/5 p-3 rounded-2xl shadow-sm">
+                            <i class="fa-solid fa-circle-check text-dimensoft-accent1 text-2xl shrink-0"></i>
+                            <span class="text-[#F3F4F6]">Predicción automática que libera tiempo para el análisis estratégico.</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flex justify-between items-center text-xs text-white/45 pt-4 border-t border-white/5">
+                    <span>Fuente: Oracle EPM Customer Survey 2018–2023  |  www.dimensoft.pe</span>
+                </div>
+            </div>
+
+            <!-- SLIDE 10: ¿LISTO PARA TRANSFORMAR SU PLANIFICACIÓN? -->
+            <div id="slide-10" class="absolute inset-0 slide-transition slide-hidden flex flex-col justify-between p-16 bg-gradient-to-br from-dimensoft-accent4 via-[#25394A] to-dimensoft-textDark text-center">
+                <div class="flex justify-between items-center">
+                    <div></div>
+                    <span class="text-xs uppercase tracking-widest text-dimensoft-accent1 font-black bg-dimensoft-accent1/15 px-3 py-1 rounded">Consultoría EPM</span>
+                </div>
+
+                <div class="max-w-4xl mx-auto my-auto space-y-8">
+                    <h2 class="text-5xl lg:text-6xl font-black text-white leading-tight">¿Listo para transformar<br><span class="text-dimensoft-accent1">su planificación?</span></h2>
+                    
+                    <p class="text-xl text-[#E5E7EB] leading-relaxed max-w-2xl mx-auto font-medium">
+                        En <strong class="text-white">Dimensoft</strong> llevamos más de 12 años implementando Oracle EPM en empresas de minería, finanzas, retail y más.
+                    </p>
+
+                    <!-- Contacto Directo -->
+                    <div class="flex items-center justify-center gap-6 pt-6">
+                        <a href="https://www.dimensoft.pe" target="_blank" class="flex items-center space-x-4 bg-white/5 hover:bg-dimensoft-accent2/25 border border-white/10 hover:border-dimensoft-accent2/60 px-8 py-4 rounded-full text-lg font-bold transition-all duration-300 shadow-lg">
+                            <span>🌐  www.dimensoft.pe</span>
+                        </a>
+                        <a href="mailto:info@dimensoft.pe" class="flex items-center space-x-4 bg-white/5 hover:bg-dimensoft-accent1/25 border border-white/10 hover:border-dimensoft-accent1/60 px-8 py-4 rounded-full text-lg font-bold transition-all duration-300 shadow-lg">
+                            <span>✉  info@dimensoft.pe</span>
+                        </a>
+                    </div>
+                </div>
+
+                <div class="border-t border-white/10 pt-6 flex items-center justify-center space-x-6 text-sm text-[#A5A5A5] font-bold">
+                    <span class="text-white font-black uppercase tracking-wider">Oracle Partner</span>
+                    <span class="w-2 h-2 rounded-full bg-dimensoft-accent6"></span>
+                    <span>EPM Specialists</span>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <!-- Barra de Control de Navegación -->
+    <footer class="w-full bg-[#21313F] border-t border-white/10 px-6 py-4 flex flex-col md:flex-row items-center justify-between z-50 gap-4">
+        
+        <!-- Mosaico de Diapositivas -->
+        <div class="flex items-center space-x-2 w-full md:w-auto justify-center md:justify-start">
+            <button id="toggleOverviewBtn" title="Ver Vista General de Diapositivas (O)" class="p-2.5 text-white/75 hover:text-white transition rounded-md hover:bg-white/10 text-xs flex items-center space-x-2 font-bold bg-white/5 border border-white/5">
+                <i class="fa-solid fa-table-cells text-dimensoft-accent2"></i>
+                <span>Mosaico [O]</span>
+            </button>
+        </div>
+
+        <!-- Botones Principales Atrás/Siguiente -->
+        <div class="flex items-center justify-center space-x-4 w-full md:w-auto">
+            <button id="prevBtn" class="w-12 h-12 rounded-full bg-white/5 hover:bg-dimensoft-accent1 transition flex items-center justify-center border border-white/10 text-white hover:border-dimensoft-accent1 active:scale-95 duration-100 shadow">
+                <i class="fa-solid fa-chevron-left text-lg"></i>
+            </button>
+            
+            <!-- Puntos dinámicos -->
+            <div id="deckDots" class="flex items-center space-x-2.5"></div>
+
+            <button id="nextBtn" class="w-12 h-12 rounded-full bg-white/5 hover:bg-dimensoft-accent1 transition flex items-center justify-center border border-white/10 text-white hover:border-dimensoft-accent1 active:scale-95 duration-100 shadow">
+                <i class="fa-solid fa-chevron-right text-lg"></i>
+            </button>
+        </div>
+
+        <!-- Derechos reservados -->
+        <div class="text-xs text-white/50 text-center md:text-right w-full md:w-auto font-bold flex items-center justify-center md:justify-end space-x-4">
+            <span class="text-sm font-semibold">Dimensoft © 2026</span>
+        </div>
+    </footer>
+
+    <!-- Mosaico / Vista General -->
+    <div id="overviewModal" class="hidden fixed inset-0 bg-[#21313F]/98 backdrop-blur-md z-50 flex flex-col justify-between p-8">
+        <div class="flex items-center justify-between border-b border-white/10 pb-5 mb-5">
+            <h3 class="text-2xl font-black flex items-center space-x-3 text-dimensoft-accent1">
+                <i class="fa-solid fa-table-cells"></i>
+                <span>Vista General de la Presentación</span>
+            </h3>
+            <button id="closeOverviewBtn" class="w-12 h-12 rounded-full bg-white/10 hover:bg-white/20 transition flex items-center justify-center text-white"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+
+        <div class="grid grid-cols-5 gap-5 overflow-y-auto max-h-[72vh] p-2" id="overviewGrid">
+            <!-- Se alimenta dinámicamente con JS -->
+        </div>
+
+        <div class="text-center text-sm text-white/50 border-t border-white/10 pt-5">
+            Presione <span class="bg-white/10 px-2 py-1 rounded font-mono">[O]</span> para salir o seleccione cualquier diapositiva directamente.
+        </div>
+    </div>
+
+    <script>
+        /**
+         * Sintetizador de audio nativo de tecnología web
+         * Genera efectos limpios y modernos al cambiar de diapositiva
+         */
+        class PresentationSynth {
+            constructor() {
+                this.ctx = null;
+                this.enabled = true;
+            }
+
+            init() {
+                if (!this.ctx) {
+                    this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+                }
+            }
+
+            playTransitionSound() {
+                if (!this.enabled) return;
+                this.init();
+                
+                try {
+                    const osc = this.ctx.createOscillator();
+                    const gain = this.ctx.createGain();
+                    
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(440, this.ctx.currentTime);
+                    osc.frequency.exponentialRampToValueAtTime(880, this.ctx.currentTime + 0.35);
+
+                    gain.gain.setValueAtTime(0.12, this.ctx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + 0.35);
+
+                    osc.connect(gain);
+                    gain.connect(this.ctx.destination);
+
+                    osc.start();
+                    osc.stop(this.ctx.currentTime + 0.35);
+                } catch(e) {
+                    console.warn("Audio Context synth issue:", e);
+                }
+            }
+
+            playPointerClick() {
+                if (!this.enabled) return;
+                this.init();
+
+                try {
+                    const osc = this.ctx.createOscillator();
+                    const gain = this.ctx.createGain();
+
+                    osc.type = 'triangle';
+                    osc.frequency.setValueAtTime(1100, this.ctx.currentTime);
+                    osc.frequency.exponentialRampToValueAtTime(200, this.ctx.currentTime + 0.08);
+
+                    gain.gain.setValueAtTime(0.05, this.ctx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + 0.08);
+
+                    osc.connect(gain);
+                    gain.connect(this.ctx.destination);
+
+                    osc.start();
+                    osc.stop(this.ctx.currentTime + 0.08);
+                } catch(e) {
+                    console.warn(e);
+                }
+            }
+        }
+
+        const synth = new PresentationSynth();
+    </script>
+
+    <script>
+        /*******************************************************************************
+         * CONFIGURACIÓN DE IDENTIDAD DE MARCA DEFINITIVA (HARDCODED)
+         * 
+         * Reemplaza los siguientes textos vacíos por el código de texto Base64 de tus
+         * imágenes si deseas que queden integrados para siempre en el archivo.
+         * 
+         * Si se dejan vacíos, se usarán por defecto los logos vectoriales estándar de
+         * Dimensoft que se muestran de inmediato.
+         *******************************************************************************/
+        const LOGOTIPO_COMPLETO_BASE64 = "data:image/png;base64,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"; // Pegar aquí el Base64 largo de tu logotipo de portada
+        const ISOTIPO_BASE64 = "data:image/png;base64,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";           // Pegar aquí el Base64 de tu icono/símbolo de cabecera
+
+        const totalSlides = 10;
+        let currentSlide = 1;
+        let isLaserActive = false;
+        let autoplayInterval = null;
+        let autoplaySpeed = 6000; 
+
+        // Cache de elementos del DOM
+        const slideViewport = document.getElementById('slideViewport');
+        const prevBtn = document.getElementById('prevBtn');
+        const nextBtn = document.getElementById('nextBtn');
+        const deckDots = document.getElementById('deckDots');
+        const currentSlideNumLabel = document.getElementById('currentSlideNum');
+        const toggleLaserBtn = document.getElementById('toggleLaserBtn');
+        const laserPointer = document.getElementById('laserPointer');
+        const autoplayBtn = document.getElementById('autoplayBtn');
+        const autoplayLabel = document.getElementById('autoplayLabel');
+        const audioToggleBtn = document.getElementById('audioToggleBtn');
+        const audioIcon = document.getElementById('audioIcon');
+        
+        // Paneles laterales
+        const toggleOverviewBtn = document.getElementById('toggleOverviewBtn');
+        const overviewModal = document.getElementById('overviewModal');
+        const closeOverviewBtn = document.getElementById('closeOverviewBtn');
+        const overviewGrid = document.getElementById('overviewGrid');
+
+        /**
+         * Sistema de Escalamiento Proporcional Avanzado por GPU
+         * Garantiza una visualización gigante y perfectamente nítida en pantallas completas y proyectores
+         */
+        function scaleProjectorViewport() {
+            const container = slideViewport.parentElement;
+            const containerWidth = container.clientWidth - 40;
+            const containerHeight = container.clientHeight - 40;
+            
+            const baseWidth = 1280;
+            const baseHeight = 720;
+            
+            const scaleX = containerWidth / baseWidth;
+            const scaleY = containerHeight / baseHeight;
+            const scale = Math.min(scaleX, scaleY);
+            
+            slideViewport.style.transform = `scale(${scale})`;
+        }
+
+        /**
+         * Inicializa la carga de marca e insignias pre-programadas
+         */
+        function applyCorporateIdentity() {
+            // 1. Isotipo en Cabecera
+            const headerIsotipo = document.getElementById('headerIsotipoContainer');
+            if (ISOTIPO_BASE64 && ISOTIPO_BASE64.trim() !== "") {
+                headerIsotipo.innerHTML = `<img class="h-8 w-8 object-contain rounded shadow" src="${ISOTIPO_BASE64}" alt="Isotipo Dimensoft">`;
+            } else {
+                headerIsotipo.innerHTML = `
+                    <div class="w-8 h-8 rounded bg-dimensoft-accent1 flex items-center justify-center font-black text-white text-base shadow-lg">D</div>
+                `;
+            }
+
+            // 2. Logotipo Grande de Portada (Slide 1)
+            const slide1Logo = document.getElementById('slide1LogoContainer');
+            if (LOGOTIPO_COMPLETO_BASE64 && LOGOTIPO_COMPLETO_BASE64.trim() !== "") {
+                slide1Logo.innerHTML = `<img class="h-28 w-auto object-contain drop-shadow-2xl" src="${LOGOTIPO_COMPLETO_BASE64}" alt="Logotipo Corporativo">`;
+            } else {
+                slide1Logo.innerHTML = `
+                    <div class="flex items-center space-x-5">
+                        <div class="w-20 h-20 rounded-2xl bg-dimensoft-accent1 flex items-center justify-center font-black text-white text-5xl shadow-2xl">D</div>
+                        <span class="text-5xl font-black tracking-widest text-white">DIMENSOFT</span>
+                    </div>
+                `;
+            }
+
+            // 3. Isotipos para el resto de diapositivas secundarias
+            const slideIsotipoTargets = document.querySelectorAll('.slide-isotipo-target');
+            slideIsotipoTargets.forEach(target => {
+                if (ISOTIPO_BASE64 && ISOTIPO_BASE64.trim() !== "") {
+                    target.innerHTML = `<img class="h-8 w-8 object-contain rounded" src="${ISOTIPO_BASE64}" alt="Icono">`;
+                } else {
+                    target.innerHTML = `
+                        <div class="w-8 h-8 rounded bg-dimensoft-accent1 flex items-center justify-center font-bold text-white text-base">D</div>
+                    `;
+                }
+            });
+        }
+
+        /**
+         * Inicializa y enlaza todos los elementos funcionales
+         */
+        function initPresentation() {
+            // Aplicar logos e identidad corporativa hardcodeada
+            applyCorporateIdentity();
+
+            // Puntos de navegación
+            deckDots.innerHTML = '';
+            for (let i = 1; i <= totalSlides; i++) {
+                const dot = document.createElement('button');
+                dot.className = `w-3.5 h-3.5 rounded-full transition-all duration-300 ${i === 1 ? 'bg-dimensoft-accent1 scale-125 shadow-md' : 'bg-white/30 hover:bg-white/60'}`;
+                dot.title = `Diapositiva ${i}`;
+                dot.addEventListener('click', () => changeSlide(i));
+                deckDots.appendChild(dot);
+            }
+
+            // Mosaico Grid de Selección Rápida
+            overviewGrid.innerHTML = '';
+            for (let i = 1; i <= totalSlides; i++) {
+                const previewItem = document.createElement('div');
+                previewItem.className = "bg-dimensoft-accent4 border border-white/10 hover:border-dimensoft-accent1 p-4 rounded-xl cursor-pointer transition hover:-translate-y-1 duration-200 flex flex-col justify-between h-40 shadow-lg";
+                previewItem.addEventListener('click', () => {
+                    changeSlide(i);
+                    closeOverviewGrid();
+                });
+
+                const origSlide = document.getElementById(`slide-${i}`);
+                const slideTitle = origSlide.querySelector('h2') ? origSlide.querySelector('h2').innerText : "Portada Dimensoft";
+                
+                previewItem.innerHTML = `
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs font-black text-dimensoft-accent1">Slide ${String(i).padStart(2, '0')}</span>
+                        <div class="w-2 h-2 rounded-full ${i === currentSlide ? 'bg-dimensoft-accent1 animate-ping' : 'bg-white/10'}"></div>
+                    </div>
+                    <div class="text-sm font-black text-white line-clamp-2 mt-2 leading-snug">${slideTitle}</div>
+                    <div class="text-[10px] text-[#A5A5A5] mt-auto">Haga click para saltar</div>
+                `;
+                overviewGrid.appendChild(previewItem);
+            }
+
+            scaleProjectorViewport();
+            window.addEventListener('resize', scaleProjectorViewport);
+        }
+
+        /**
+         * Ejecuta la transición de diapositivas
+         */
+        function changeSlide(nextIndex) {
+            if (nextIndex < 1 || nextIndex > totalSlides || nextIndex === currentSlide) return;
+
+            synth.playTransitionSound();
+
+            const currentElement = document.getElementById(`slide-${currentSlide}`);
+            const nextElement = document.getElementById(`slide-${nextIndex}`);
+
+            currentElement.classList.replace('slide-active', 'slide-hidden');
+            nextElement.classList.replace('slide-hidden', 'slide-active');
+
+            currentSlide = nextIndex;
+            currentSlideNumLabel.innerText = currentSlide;
+
+            // Actualizar estado de los botones circulares
+            const dots = deckDots.children;
+            for (let i = 0; i < dots.length; i++) {
+                if (i === currentSlide - 1) {
+                    dots[i].className = 'w-3.5 h-3.5 rounded-full bg-dimensoft-accent1 scale-125 shadow-md transition-all duration-300';
+                } else {
+                    dots[i].className = 'w-3.5 h-3.5 rounded-full bg-white/30 hover:bg-white/60 transition-all duration-300';
+                }
+            }
+        }
+
+        // Controladores de mosaico general
+        function openOverviewGrid() {
+            overviewModal.classList.remove('hidden');
+            initPresentation();
+        }
+        function closeOverviewGrid() {
+            overviewModal.classList.add('hidden');
+        }
+        toggleOverviewBtn.addEventListener('click', openOverviewGrid);
+        closeOverviewBtn.addEventListener('click', closeOverviewGrid);
+
+        // Disparadores directos de atrás/adelante
+        prevBtn.addEventListener('click', () => changeSlide(currentSlide - 1));
+        nextBtn.addEventListener('click', () => changeSlide(currentSlide + 1));
+
+        // Eventos del Teclado
+        window.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowRight' || e.key === 'Space' || e.key === ' ') {
+                e.preventDefault();
+                changeSlide(currentSlide + 1);
+            } else if (e.key === 'ArrowLeft') {
+                e.preventDefault();
+                changeSlide(currentSlide - 1);
+            } else if (e.key.toLowerCase() === 'l') {
+                toggleLaserPointer();
+            } else if (e.key.toLowerCase() === 'o') {
+                if (overviewModal.classList.contains('hidden')) {
+                    openOverviewGrid();
+                } else {
+                    closeOverviewGrid();
+                }
+            } else if (e.key.toLowerCase() === 'm') {
+                toggleAudio();
+            }
+        });
+
+        // Soporte Swipe para pantallas móviles y táctiles
+        let touchStartX = 0;
+        let touchEndX = 0;
+
+        slideViewport.addEventListener('touchstart', (e) => {
+            touchStartX = e.changedTouches[0].screenX;
+        }, { passive: true });
+
+        slideViewport.addEventListener('touchend', (e) => {
+            touchEndX = e.changedTouches[0].screenX;
+            handleSwipe();
+        }, { passive: true });
+
+        function handleSwipe() {
+            const threshold = 55;
+            if (touchEndX < touchStartX - threshold) {
+                changeSlide(currentSlide + 1);
+            }
+            if (touchEndX > touchStartX + threshold) {
+                changeSlide(currentSlide - 1);
+            }
+        }
+
+        // Silenciar/Habilitar SFX
+        function toggleAudio() {
+            synth.enabled = !synth.enabled;
+            if (synth.enabled) {
+                audioIcon.className = "fa-solid fa-volume-high text-xs text-white";
+                synth.playPointerClick();
+            } else {
+                audioIcon.className = "fa-solid fa-volume-xmark text-xs text-white/50";
+            }
+        }
+        audioToggleBtn.addEventListener('click', toggleAudio);
+
+        // Auto-reproducción
+        function toggleAutoplay() {
+            if (autoplayInterval) {
+                clearInterval(autoplayInterval);
+                autoplayInterval = null;
+                autoplayBtn.classList.remove('bg-dimensoft-accent1/20', 'text-dimensoft-accent1');
+                autoplayLabel.innerText = "Auto";
+                autoplayBtn.querySelector('i').className = "fa-solid fa-play text-xs mr-1";
+            } else {
+                autoplayBtn.classList.add('bg-dimensoft-accent1/20', 'text-dimensoft-accent1');
+                autoplayLabel.innerText = "Pausar";
+                autoplayBtn.querySelector('i').className = "fa-solid fa-pause text-xs mr-1";
+                
+                autoplayInterval = setInterval(() => {
+                    if (currentSlide === totalSlides) {
+                        changeSlide(1);
+                    } else {
+                        changeSlide(currentSlide + 1);
+                    }
+                }, autoplaySpeed);
+            }
+        }
+        autoplayBtn.addEventListener('click', toggleAutoplay);
+
+        // Control Láser Virtual
+        function toggleLaserPointer() {
+            isLaserActive = !isLaserActive;
+            if (isLaserActive) {
+                toggleLaserBtn.classList.add('bg-red-500/10', 'text-red-500');
+                slideViewport.style.cursor = 'none';
+                laserPointer.style.display = 'block';
+                synth.playPointerClick();
+            } else {
+                toggleLaserBtn.classList.remove('bg-red-500/10', 'text-red-500');
+                slideViewport.style.cursor = 'default';
+                laserPointer.style.display = 'none';
+            }
+        }
+        toggleLaserBtn.addEventListener('click', toggleLaserPointer);
+
+        slideViewport.addEventListener('mousemove', (e) => {
+            if (!isLaserActive) return;
+            const bounds = slideViewport.getBoundingClientRect();
+            
+            const scaleX = bounds.width / 1280;
+            const scaleY = bounds.height / 720;
+            
+            const x = (e.clientX - bounds.left) / scaleX;
+            const y = (e.clientY - bounds.top) / scaleY;
+
+            if (x >= 0 && x <= 1280 && y >= 0 && y <= 720) {
+                laserPointer.style.left = `${e.clientX - 8}px`;
+                laserPointer.style.top = `${e.clientY - 8}px`;
+                laserPointer.style.display = 'block';
+            } else {
+                laserPointer.style.display = 'none';
+            }
+        });
+
+        slideViewport.addEventListener('mouseleave', () => {
+            laserPointer.style.display = 'none';
+        });
+
+        // Inicializar al terminar de cargar la ventana
+        window.onload = function() {
+            initPresentation();
+        };
+    </script>
+</body>
+</html>
